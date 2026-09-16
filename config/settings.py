@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "drf_spectacular",
     "corsheaders",
+    'apps.users',
 ]
 
 MIDDLEWARE = [
@@ -158,6 +159,8 @@ MAILERS = {
     },
 }
 
+
+AUTH_USER_MODEL = 'users.User'
 
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",

@@ -1,4 +1,5 @@
 from django.db import models
+from .managers import UserManager
 from django.contrib.auth.models import AbstractUser
 
 
@@ -9,6 +10,8 @@ class User(AbstractUser):
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["full_name"]
+    
+    objects = UserManager()
 
     class Meta:
         verbose_name = "User"
