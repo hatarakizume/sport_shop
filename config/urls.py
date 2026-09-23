@@ -32,6 +32,7 @@ urlpatterns = [
     path("api/users/", include("apps.users.urls")),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path('api/catalog/', include('apps.catalog.urls')),
+    path('api/cart/', include('apps.cart.urls')),
     # Документация API
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(
