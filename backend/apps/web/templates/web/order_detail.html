@@ -1,0 +1,130 @@
+{% extends "web/base.html" %}
+{% load shop %}
+{% block title %}Заказ №{{ order.pk }}{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-[1320px] px-4 pt-10 sm:px-6 lg:px-10" x-data="{ confirmCancel: false }">
+  <a href="{% url 'web:orders' %}" class="font-mono text-[11px] uppercase tracking-[0.18em] text-faint hover:text-gold">← Все заказы</a>
+
+  <div class="mt-6 flex flex-wrap items-end justify-between gap-6 border-b border-rule pb-8">
+    <div>
+      <p class="eyebrow">{{ order.created_at|date:"d.m.Y, H:i" }}</p>
+      <h1 class="t-headline mt-3">Заказ <span class="tabular">№{{ order.pk|stringformat:"04d" }}</span></h1>
+    </div>
+    {% include "web/partials/_order_badge.html" %}
+  </div>
+
+  {# шкала статусов #}
+  <ol class="mt-8 grid max-w-xl grid-cols-3">
+    {% for label, done in steps %}
+      <li class="relative pt-5">
+        <span class="absolute inset-x-0 top-0 h-px {% if done %}{% if order.status == 'PAID' %}bg-patina{% else %}bg-gold{% endif %}{% else %}bg-rule{% endif %}"></span>
+        <span class="absolute -top-[3px] left-0 size-[7px] rotate-45 {% if done %}{% if order.status == 'PAID' %}bg-patina{% else %}bg-gold{% endif %}{% else %}bg-graphite-2{% endif %}"></span>
+        <span class="font-mono text-[11px] uppercase tracking-[0.18em] {% if done %}text-champagne{% else %}text-mute-deep{% endif %}">{{ label }}</span>
+      </li>
+    {% endfor %}
+  </ol>
+
+  <div class="mt-12 grid gap-10 lg:grid-cols-12">
+    <div class="space-y-8 lg:col-span-7">
+      {% if awaiting_webhook %}
+        {% include "web/partials/order_waiting.html" %}
+      {% endif %}
+
+      {% if order.status == "RESERVED" and order.seconds_left %}
+      <section class="panel relative overflow-hidden" x-data="countdown({{ order.seconds_left }}, {{ reserve_total }})" data-reload>
+        <div class="seam absolute inset-x-0 top-0"></div>
+        <div class="grid items-center gap-8 p-8 sm:grid-cols-[auto_1fr] sm:p-10">
+          <div class="relative mx-auto size-44">
+            <svg viewBox="0 0 120 120" class="size-full -rotate-90" aria-hidden="true">
+              <circle cx="60" cy="60" r="54" fill="none" stroke="var(--color-graphite-2)" stroke-width="2"/>
+              <circle cx="60" cy="60" r="54" fill="none" stroke-width="2.5" stroke-dasharray="339.3"
+                      :stroke="urgent ? 'var(--color-vermilion)' : 'var(--color-gold)'" :stroke-dashoffset="339.3 * (1 - ratio)"
+                      class="transition-[stroke-dashoffset] duration-300 ease-linear" stroke="var(--color-gold)"/>
+            </svg>
+            <div class="absolute inset-0 grid place-items-center text-center">
+              <div role="timer" aria-live="off">
+                <p class="font-display text-[56px] font-thin leading-none tabular" :class="urgent ? 'text-[oklch(72%_0.13_35)]' : 'text-champagne'" x-text="`${mm}:${ss}`">{{ order.seconds_left|mmss }}</p>
+                <p class="eyebrow mt-1.5">резерв</p>
+              </div>
+            </div>
+          </div>
+          <div>
+            <h2 class="font-display text-[40px] font-light leading-[1.05] text-champagne">Товары закреплены за вами</h2>
+            <p class="mt-3 text-[15px] text-muted">Оплатите заказ, пока не истёк таймер. Потом резерв снимется и товар вернётся в продажу.</p>
+            <div class="mt-7 flex flex-wrap gap-3">
+              <form method="post" action="{% url 'web:order_pay' order.pk %}" x-data="{ busy: false }" @submit="busy = true">{% csrf_token %}
+                <button class="btn btn-primary sheen" :disabled="busy || left === 0">
+                  <span x-text="busy ? 'Переходим в Stripe…' : 'Оплатить {{ order.total_price|money }}'">Оплатить {{ order.total_price|money }}</span>
+                </button>
+              </form>
+              <button type="button" @click="confirmCancel = true" class="btn btn-ghost text-faint hover:text-[oklch(72%_0.13_35)]">Отменить заказ</button>
+            </div>
+          </div>
+        </div>
+      </section>
+      {% elif order.status == "PAID" %}
+      <section class="panel relative overflow-hidden p-8 sm:p-10">
+        <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-patina to-transparent"></div>
+        <p class="eyebrow flex items-center gap-2.5 text-patina-text"><span class="size-1.5 rounded-full bg-patina shadow-patina"></span>Оплачено{% if order.payment.paid_at %} · {{ order.payment.paid_at|date:"d.m.Y H:i" }}{% endif %}</p>
+        <h2 class="mt-4 font-display text-[40px] font-light leading-[1.05] text-champagne">Спасибо! Заказ собираем</h2>
+        <p class="mt-3 max-w-[56ch] text-[15px] text-muted">Подтверждение отправили на {{ user.email }}. Статус доставки появится здесь.</p>
+      </section>
+      {% elif order.status == "EXPIRED" or order.status == "CANCELLED" %}
+      <section class="rounded-sm border border-dashed border-rule p-8 sm:p-10">
+        <h2 class="font-display text-[40px] font-light leading-[1.05] text-champagne">{% if order.status == "EXPIRED" %}Время резерва истекло{% else %}Заказ отменён{% endif %}</h2>
+        <p class="mt-3 text-[15px] text-muted">Товары вернулись в продажу. Если они всё ещё нужны — оформите заказ заново.</p>
+        <a href="{% url 'web:catalog' %}" class="btn btn-secondary btn-sm mt-7">В каталог</a>
+      </section>
+      {% endif %}
+
+      <section>
+        <p class="mono-label">Состав · {{ order.items.all|length }}</p>
+        <ul class="mt-4 divide-y divide-rule border-y border-rule">
+          {% for item in order.items.all %}{% with p=item.product_variant.product %}
+          <li class="flex items-center gap-5 py-5">
+            <a href="{% url 'web:product' p.slug %}" class="size-20 shrink-0 overflow-hidden rounded-xs border border-rule bg-raised">{% if p.image %}<img src="{{ p.image.url }}" alt="" class="size-full object-cover">{% endif %}</a>
+            <div class="min-w-0 flex-1">
+              <a href="{% url 'web:product' p.slug %}" class="block truncate text-[15px] text-champagne hover:text-gold">{{ p.name }}</a>
+              <p class="font-mono text-[11px] uppercase tracking-[0.14em] text-faint">Размер {{ item.product_variant.size }} · {{ item.quantity }} × {{ item.price|money }}</p>
+            </div>
+            <span class="font-mono text-[14px] text-champagne tabular">{{ item.price|mul:item.quantity|money }}</span>
+          </li>
+          {% endwith %}{% endfor %}
+        </ul>
+      </section>
+    </div>
+
+    <aside class="space-y-6 lg:col-span-5">
+      <div class="card p-7">
+        <p class="mono-label">Доставка</p>
+        {% with a=order.address %}
+        <p class="t-title mt-4">{{ a.title|default:a.city }}</p>
+        <p class="mt-1 text-[14px] text-muted">{{ a.city }}, {{ a.street }}, д. {{ a.house }}{% if a.apartment %}, кв. {{ a.apartment }}{% endif %}<br>{{ a.postal_code }}</p>
+        {% if a.recipient_name or a.recipient_phone %}<p class="mt-3 font-mono text-[12px] text-faint">{{ a.recipient_name }} {{ a.recipient_phone }}</p>{% endif %}
+        {% endwith %}
+      </div>
+      <div class="card p-7">
+        <p class="mono-label">Сумма</p>
+        <div class="mt-4 flex items-baseline justify-between">
+          <span class="text-muted">Итого</span>
+          <span class="font-display text-[48px] font-light leading-none text-champagne tabular">{{ order.total_price|money }}</span>
+        </div>
+        {% if order.payment %}<p class="mt-4 font-mono text-[11px] uppercase tracking-[0.14em] text-faint">Платёж · {{ order.payment.get_status_display }}</p>{% endif %}
+      </div>
+    </aside>
+  </div>
+
+  {# модалка подтверждения отмены #}
+  <div x-cloak x-show="confirmCancel" class="fixed inset-0 z-[70] grid place-items-center px-4" role="dialog" aria-modal="true" @keydown.escape.window="confirmCancel = false" x-trap.noscroll="confirmCancel">
+    <div x-show="confirmCancel" x-transition.opacity class="absolute inset-0 bg-lacquer-deep/85" @click="confirmCancel = false"></div>
+    <div x-show="confirmCancel" x-transition:enter="transition duration-300 ease-ks" x-transition:enter-start="opacity-0 scale-95" class="panel relative w-full max-w-md p-8">
+      <p class="t-title">Отменить заказ №{{ order.pk|stringformat:"04d" }}?</p>
+      <p class="mt-3 text-[15px] text-muted">Резерв снимется, товары вернутся в продажу. Действие нельзя отменить.</p>
+      <div class="mt-8 flex justify-end gap-3">
+        <button type="button" @click="confirmCancel = false" class="btn btn-secondary btn-sm">Оставить</button>
+        <form method="post" action="{% url 'web:order_cancel' order.pk %}">{% csrf_token %}<button class="btn btn-danger btn-sm">Да, отменить</button></form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

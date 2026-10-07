@@ -1,0 +1,104 @@
+{% load static %}<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Спортивная экипировка{% endblock %} — {{ SHOP_NAME }}</title>
+  <meta name="description" content="{% block description %}Экипировка для бега, зала и улицы. Резерв товара на 15 минут при оформлении.{% endblock %}">
+  <meta name="theme-color" content="#0b0a08">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='2' fill='%23f2b43a'/%3E%3Cpath d='M9 25 23 7' stroke='%23110f0a' stroke-width='3'/%3E%3C/svg%3E">
+
+  {# фон до загрузки Tailwind — без белой вспышки #}
+  <style>html{background:oklch(7% 0.006 95);color:oklch(88% 0 0)}</style>
+  <script>document.documentElement.classList.add('js')</script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@400;500;600&family=Alumni+Sans:wght@100;300;400&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+
+  {% include "web/partials/_theme.html" %}
+
+  <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.4/dist/htmx.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/intersect@3.14.8/dist/cdn.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/focus@3.14.8/dist/cdn.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+  {% block head %}{% endblock %}
+</head>
+
+<body class="min-h-dvh bg-lacquer font-sans text-[16px] text-body antialiased selection:bg-gold selection:text-ink"
+      hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+      x-data="shop"
+      @keydown.window.meta.k.prevent="openSearch()"
+      @keydown.window.ctrl.k.prevent="openSearch()"
+      @keydown.window.slash="if (!['INPUT','TEXTAREA','SELECT'].includes($event.target.tagName)) { $event.preventDefault(); openSearch() }"
+      @toast.window="push($event.detail)"
+      @cart-open.window="openCart()"
+      :class="(cartOpen || searchOpen) && 'overflow-hidden'">
+
+  <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:bg-gold focus:px-4 focus:py-2 focus:text-ink">К содержимому</a>
+
+  {% include "web/partials/_header.html" %}
+
+  <main id="main" class="relative">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% include "web/partials/_footer.html" %}
+  {% include "web/partials/_cart_drawer_shell.html" %}
+  {% include "web/partials/_search.html" %}
+  {% include "web/partials/_toasts.html" %}
+
+  <script>
+    window.__messages = [{% for m in messages %}{ message: "{{ m.message|escapejs }}", level: "{{ m.tags|escapejs }}" },{% endfor %}];
+
+    document.addEventListener('alpine:init', () => {
+      Alpine.data('shop', () => ({
+        cartOpen: false,
+        searchOpen: false,
+        scrolled: false,
+        toasts: [],
+        init() {
+          const onScroll = () => { this.scrolled = window.scrollY > 8 };
+          onScroll();
+          window.addEventListener('scroll', onScroll, { passive: true });
+          (window.__messages || []).forEach((m, i) => setTimeout(() => this.push(m), 150 + i * 120));
+        },
+        push(detail) {
+          if (!detail || !detail.message) return;
+          const id = Date.now() + Math.random();
+          const level = (detail.level || 'info').split(' ').pop();
+          this.toasts.push({ id, message: detail.message, level });
+          setTimeout(() => this.dismiss(id), level === 'error' ? 7000 : 4200);
+        },
+        dismiss(id) { this.toasts = this.toasts.filter(t => t.id !== id) },
+        openCart() {
+          this.cartOpen = true;
+          window.dispatchEvent(new CustomEvent('drawer-open'));
+        },
+        openSearch() {
+          this.searchOpen = true;
+          this.$nextTick(() => document.getElementById('palette-input')?.focus());
+        },
+      }));
+
+      // таймер резерва: data-seconds -> мм:сс, по нулю — перезагрузка (сервер снимет резерв)
+      Alpine.data('countdown', (seconds, total = 900) => ({
+        left: seconds,
+        total,
+        get mm() { return String(Math.floor(this.left / 60)).padStart(2, '0') },
+        get ss() { return String(this.left % 60).padStart(2, '0') },
+        get ratio() { return Math.max(0, Math.min(1, this.left / this.total)) },
+        get urgent() { return this.left <= 60 },
+        init() {
+          const end = Date.now() + this.left * 1000;
+          const tick = setInterval(() => {
+            this.left = Math.max(0, Math.round((end - Date.now()) / 1000));
+            if (this.left === 0) { clearInterval(tick); if (this.$el.dataset.reload !== undefined) setTimeout(() => location.reload(), 1200) }
+          }, 250);
+        },
+      }));
+    });
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

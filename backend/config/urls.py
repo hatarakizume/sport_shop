@@ -43,7 +43,11 @@ urlpatterns = [
         name="swagger-ui",
     ),
     path("api/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
+    # HTML-витрина на Django templates + Tailwind
+    path("", include("apps.web.urls")),
 ]
+
+handler404 = "apps.web.views.page_not_found"
 
 
 if settings.DEBUG:

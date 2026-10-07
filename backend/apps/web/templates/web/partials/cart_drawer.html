@@ -1,0 +1,48 @@
+{% load shop %}
+{% if not user.is_authenticated %}
+  <div class="flex flex-1 flex-col items-center justify-center px-8 text-center">
+    {% include "web/partials/_mark.html" with cls="size-10 opacity-80" %}
+    <p class="t-title mt-6">Войдите, чтобы собрать корзину</p>
+    <p class="mt-2 text-[14px] text-muted">Корзина хранится в аккаунте и доступна с любого устройства.</p>
+    <a href="{% url 'web:login' %}" class="btn btn-primary mt-8 w-full">Войти</a>
+    <a href="{% url 'web:register' %}" class="btn btn-ghost mt-2">Создать аккаунт</a>
+  </div>
+{% elif not items %}
+  <div class="flex flex-1 flex-col items-center justify-center px-8 text-center">
+    <p class="font-display text-[48px] font-thin leading-none text-champagne">Пусто</p>
+    <p class="mt-3 text-[14px] text-muted">Здесь появятся товары, которые вы добавите.</p>
+    <a href="{% url 'web:catalog' %}" class="btn btn-secondary btn-sm mt-8">Перейти в каталог</a>
+  </div>
+{% else %}
+  <ul class="min-h-0 flex-1 divide-y divide-rule overflow-y-auto px-6">
+    {% for item in items %}{% with p=item.product_variant.product %}
+      <li class="flex gap-4 py-5">
+        <a href="{% url 'web:product' p.slug %}" class="size-20 shrink-0 overflow-hidden rounded-xs border border-rule bg-lacquer-deep">
+          {% if p.image %}<img src="{{ p.image.url }}" alt="" class="size-full object-cover">{% endif %}
+        </a>
+        <div class="flex min-w-0 flex-1 flex-col">
+          <a href="{% url 'web:product' p.slug %}" class="truncate text-[15px] text-champagne hover:text-gold">{{ p.name }}</a>
+          <p class="mt-0.5 font-mono text-[11px] uppercase tracking-[0.14em] text-faint">Размер {{ item.product_variant.size }} · {{ item.quantity }} шт.</p>
+          <div class="mt-auto flex items-end justify-between">
+            <span class="font-mono text-[13px] text-champagne tabular">{{ item.subtotal|money }}</span>
+            <form hx-post="{% url 'web:cart_remove' item.pk %}" hx-target="#cart-drawer" hx-swap="innerHTML">
+              <input type="hidden" name="from" value="drawer">
+              <button class="text-[12px] text-faint underline-offset-4 hover:text-[oklch(72%_0.13_35)] hover:underline">Убрать</button>
+            </form>
+          </div>
+        </div>
+      </li>
+    {% endwith %}{% endfor %}
+  </ul>
+  <div class="border-t border-rule bg-lacquer px-6 py-6">
+    <div class="flex items-baseline justify-between">
+      <span class="mono-label">Итого · {{ count }} шт.</span>
+      <span class="font-display text-[32px] font-light text-champagne tabular">{{ total|money }}</span>
+    </div>
+    <p class="mt-2 flex items-center gap-2 text-[13px] text-muted"><span class="size-1.5 rounded-full bg-patina"></span>После оформления товар резервируется на 15 минут</p>
+    <div class="mt-5 grid grid-cols-2 gap-3">
+      <a href="{% url 'web:cart' %}" class="btn btn-secondary btn-sm">Корзина</a>
+      <a href="{% url 'web:checkout' %}" class="btn btn-primary btn-sm sheen">Оформить</a>
+    </div>
+  </div>
+{% endif %}

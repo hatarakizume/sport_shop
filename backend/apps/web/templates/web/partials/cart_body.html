@@ -1,0 +1,64 @@
+{% load shop %}
+{% if items %}
+<div class="grid gap-10 lg:grid-cols-12">
+  <ul class="divide-y divide-rule border-y border-rule lg:col-span-8">
+    {% for item in items %}{% with v=item.product_variant p=item.product_variant.product %}
+    <li class="flex gap-5 py-6 sm:gap-6">
+      <a href="{% url 'web:product' p.slug %}" class="size-24 shrink-0 overflow-hidden rounded-xs border border-rule bg-raised sm:size-32">
+        {% if p.image %}<img src="{{ p.image.url }}" alt="{{ p.name }}" class="size-full object-cover">{% endif %}
+      </a>
+      <div class="flex min-w-0 flex-1 flex-col">
+        <div class="flex items-start justify-between gap-4">
+          <div class="min-w-0">
+            <p class="eyebrow">{{ p.brand.name|default:"" }}</p>
+            <a href="{% url 'web:product' p.slug %}" class="mt-1 block text-[16px] text-champagne hover:text-gold">{{ p.name }}</a>
+            <p class="mt-1 font-mono text-[12px] uppercase tracking-[0.14em] text-faint">Размер {{ v.size }} · {{ p.price|money }}</p>
+          </div>
+          <p class="shrink-0 font-mono text-[15px] text-champagne tabular">{{ item.subtotal|money }}</p>
+        </div>
+        <div class="mt-auto flex items-center justify-between gap-4 pt-4">
+          <form hx-post="{% url 'web:cart_update' item.pk %}" hx-target="#cart-body" hx-swap="innerHTML"
+                method="post" action="{% url 'web:cart_update' item.pk %}"
+                class="flex h-11 items-center rounded-xs border border-rule">{% csrf_token %}
+            <button name="quantity" value="{{ item.quantity|add:-1 }}" class="grid h-full w-11 place-items-center text-champagne hover:text-gold" aria-label="Меньше">−</button>
+            <span class="w-8 text-center font-mono text-[14px] text-champagne tabular">{{ item.quantity }}</span>
+            <button name="quantity" value="{{ item.quantity|add:1 }}" class="grid h-full w-11 place-items-center text-champagne hover:text-gold disabled:text-mute-deep disabled:cursor-not-allowed" {% if item.quantity >= v.available_quantity %}disabled title="Больше нет в наличии"{% endif %} aria-label="Больше">+</button>
+          </form>
+          {% if v.available_quantity < item.quantity %}
+            <span class="text-[12px] text-[oklch(72%_0.13_35)]">Доступно только {{ v.available_quantity }}</span>
+          {% elif v.available_quantity <= 3 %}
+            <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-gold">Осталось {{ v.available_quantity }}</span>
+          {% endif %}
+          <form hx-post="{% url 'web:cart_remove' item.pk %}" hx-target="#cart-body" hx-swap="innerHTML" method="post" action="{% url 'web:cart_remove' item.pk %}">{% csrf_token %}
+            <button class="text-[13px] text-faint underline-offset-4 hover:text-[oklch(72%_0.13_35)] hover:underline">Удалить</button>
+          </form>
+        </div>
+      </div>
+    </li>
+    {% endwith %}{% endfor %}
+  </ul>
+
+  <aside class="lg:col-span-4">
+    <div class="panel sticky top-24 p-7">
+      <p class="mono-label">Итого</p>
+      <dl class="mt-6 space-y-3 text-[14px]">
+        <div class="flex justify-between"><dt class="text-muted">Товары · {{ count }} шт.</dt><dd class="font-mono text-champagne tabular">{{ total|money }}</dd></div>
+        <div class="flex justify-between"><dt class="text-muted">Доставка</dt><dd class="text-muted">при оформлении</dd></div>
+      </dl>
+      <div class="hairline my-6"></div>
+      <div class="flex items-baseline justify-between">
+        <span class="t-title">К оплате</span>
+        <span class="font-display text-[48px] font-light leading-none text-champagne tabular">{{ total|money }}</span>
+      </div>
+      <a href="{% url 'web:checkout' %}" class="btn btn-primary sheen mt-8 w-full">Оформить заказ →</a>
+      <p class="mt-5 flex gap-2.5 text-[13px] leading-relaxed text-muted"><span class="mt-2 size-1.5 shrink-0 rounded-full bg-patina"></span>После оформления товары резервируются за вами на 15 минут — успейте оплатить.</p>
+    </div>
+  </aside>
+</div>
+{% else %}
+<div class="flex flex-col items-center rounded-sm border border-dashed border-rule px-6 py-28 text-center">
+  <p class="font-display text-[72px] font-thin leading-none text-champagne">Пусто</p>
+  <p class="mt-4 max-w-sm text-muted">В корзине ничего нет. Начните с новинок или загляните в каталог.</p>
+  <a href="{% url 'web:catalog' %}" class="btn btn-primary sheen mt-10">В каталог</a>
+</div>
+{% endif %}

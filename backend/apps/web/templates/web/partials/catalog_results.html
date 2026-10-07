@@ -1,0 +1,48 @@
+<div class="flex flex-wrap items-center gap-2">
+  <p class="mr-3 font-mono text-[11px] uppercase tracking-[0.18em] text-faint">
+    Найдено <span class="text-champagne tabular">{{ page.paginator.count }}</span>
+  </p>
+  {% for label, url in chips %}
+    <a href="{{ url }}"
+       class="group inline-flex items-center gap-2 rounded-full border border-rule-gold px-3 py-1 text-[12px] text-gold transition hover:border-vermilion/60 hover:text-[oklch(72%_0.13_35)]">
+      {{ label }}<span class="text-[10px] opacity-60 group-hover:opacity-100" aria-label="снять">✕</span>
+    </a>
+  {% endfor %}
+  {% if chips|length > 1 %}<a href="{{ clear_url }}" class="ml-1 text-[12px] text-faint underline-offset-4 hover:text-champagne hover:underline">Сбросить всё</a>{% endif %}
+</div>
+
+{% if page.object_list %}
+  <div class="mt-8 grid grid-cols-2 gap-x-4 gap-y-12 sm:gap-x-6 md:grid-cols-3">
+    {% for p in page.object_list %}
+      {% widthratio forloop.counter0 1 60 as d %}{% include "web/partials/_product_card.html" with delay=d %}
+    {% endfor %}
+  </div>
+
+  {% if page.has_other_pages %}
+  <nav class="mt-16 flex items-center justify-between border-t border-rule pt-6" aria-label="Страницы">
+    {% if page.has_previous %}
+      <a href="{% querystring page=page.previous_page_number %}" hx-get="{% querystring page=page.previous_page_number %}" hx-target="#results" hx-push-url="true" hx-swap="innerHTML show:#catalog-top:top" class="btn btn-secondary btn-sm">← Назад</a>
+    {% else %}<span></span>{% endif %}
+    <div class="flex items-center gap-1 font-mono text-[12px]">
+      {% for n in page.paginator.page_range %}
+        {% if n == page.number %}
+          <span class="grid size-10 place-items-center rounded-xs bg-gold text-ink tabular" aria-current="page">{{ n }}</span>
+        {% elif n == 1 or n == page.paginator.num_pages or n >= page.number|add:-1 and n <= page.number|add:1 %}
+          <a href="{% querystring page=n %}" hx-get="{% querystring page=n %}" hx-target="#results" hx-push-url="true" hx-swap="innerHTML show:#catalog-top:top" class="grid size-10 place-items-center rounded-xs text-muted transition hover:bg-graphite hover:text-champagne tabular">{{ n }}</a>
+        {% elif n == 2 or n == page.paginator.num_pages|add:-1 %}
+          <span class="px-1 text-mute-deep">…</span>
+        {% endif %}
+      {% endfor %}
+    </div>
+    {% if page.has_next %}
+      <a href="{% querystring page=page.next_page_number %}" hx-get="{% querystring page=page.next_page_number %}" hx-target="#results" hx-push-url="true" hx-swap="innerHTML show:#catalog-top:top" class="btn btn-secondary btn-sm">Дальше →</a>
+    {% else %}<span></span>{% endif %}
+  </nav>
+  {% endif %}
+{% else %}
+  <div class="mt-8 flex flex-col items-center rounded-sm border border-dashed border-rule px-6 py-24 text-center">
+    <p class="font-display text-[56px] font-thin leading-none text-champagne">Ничего</p>
+    <p class="mt-4 max-w-sm text-muted">По этим фильтрам товаров нет. Снимите часть условий или посмотрите весь каталог.</p>
+    <a href="{{ clear_url }}" class="btn btn-secondary btn-sm mt-8">Сбросить фильтры</a>
+  </div>
+{% endif %}

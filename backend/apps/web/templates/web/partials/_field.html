@@ -1,0 +1,9 @@
+{# include with name label value errors type placeholder hint autocomplete span #}
+<div class="{{ span|default:'' }}">
+  <label for="f-{{ name }}" class="field-label">{{ label }}{% if optional %} <span class="normal-case tracking-normal text-mute-deep">— необязательно</span>{% endif %}</label>
+  <input id="f-{{ name }}" name="{{ name }}" type="{{ type|default:'text' }}" value="{{ value|default:'' }}"
+         {% if placeholder %}placeholder="{{ placeholder }}"{% endif %} {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %}
+         {% if inputmode %}inputmode="{{ inputmode }}"{% endif %} {% if not optional %}required{% endif %}
+         {% if errors %}aria-invalid="true" aria-describedby="e-{{ name }}"{% endif %} class="input">
+  {% if errors %}<p id="e-{{ name }}" class="field-error">{{ errors|join:" " }}</p>{% elif hint %}<p class="mt-2 text-[12px] text-faint">{{ hint }}</p>{% endif %}
+</div>

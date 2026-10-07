@@ -1,0 +1,44 @@
+{% url 'web:catalog' as catalog_url %}
+<footer class="relative mt-28 bg-lacquer-deep">
+  <div class="seam"></div>
+  <div class="h-px bg-gradient-to-r from-transparent via-patina-deep/70 to-transparent"></div>
+  <div class="mx-auto grid max-w-[1320px] gap-12 px-4 py-16 sm:px-6 md:grid-cols-12 lg:px-10">
+    <div class="md:col-span-5">
+      <a href="{% url 'web:home' %}" class="flex items-center gap-3">{% include "web/partials/_mark.html" %}<span class="wordmark">{{ SHOP_NAME }}</span></a>
+      <p class="mt-6 max-w-sm text-[15px] leading-relaxed text-muted">Экипировка для тренировок и города. Добавили в корзину — оформили — товар держится за вами 15 минут, пока вы платите.</p>
+      <p class="mt-6 inline-flex items-center gap-2.5 font-mono text-[11px] uppercase tracking-[0.18em] text-patina-text">
+        <span class="size-1.5 rounded-full bg-patina animate-pulse-dot"></span> Склад онлайн
+      </p>
+    </div>
+    <div class="md:col-span-3">
+      <p class="mono-label">Каталог</p>
+      <ul class="mt-5 space-y-3 text-[14px]">
+        <li><a class="text-body hover:text-gold" href="{{ catalog_url }}">Все товары</a></li>
+        {% for c in nav_categories|slice:":5" %}<li><a class="text-body hover:text-gold" href="{{ catalog_url }}?category={{ c.slug }}">{{ c.name }}</a></li>{% endfor %}
+      </ul>
+    </div>
+    <div class="md:col-span-2">
+      <p class="mono-label">Аккаунт</p>
+      <ul class="mt-5 space-y-3 text-[14px]">
+        {% if user.is_authenticated %}
+          <li><a class="text-body hover:text-gold" href="{% url 'web:orders' %}">Заказы</a></li>
+          <li><a class="text-body hover:text-gold" href="{% url 'web:profile' %}">Профиль</a></li>
+        {% else %}
+          <li><a class="text-body hover:text-gold" href="{% url 'web:login' %}">Вход</a></li>
+          <li><a class="text-body hover:text-gold" href="{% url 'web:register' %}">Регистрация</a></li>
+        {% endif %}
+        <li><a class="text-body hover:text-gold" href="{% url 'web:cart' %}">Корзина</a></li>
+      </ul>
+    </div>
+    <div class="md:col-span-2">
+      <p class="mono-label">Оплата</p>
+      <p class="mt-5 text-[14px] leading-relaxed text-muted">Карты через Stripe. Данные карты не проходят через наш сервер.</p>
+    </div>
+  </div>
+  <div class="border-t border-rule">
+    <div class="mx-auto flex max-w-[1320px] flex-wrap items-center justify-between gap-4 px-4 py-6 font-mono text-[11px] uppercase tracking-[0.18em] text-mute-deep sm:px-6 lg:px-10">
+      <span>© {% now "Y" %} {{ SHOP_NAME }}</span>
+      <span>Резерв · 15:00</span>
+    </div>
+  </div>
+</footer>

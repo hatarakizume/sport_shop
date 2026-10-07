@@ -1,0 +1,4 @@
+<span id="cart-badge"
+      hx-get="{% url 'web:cart_badge' %}" hx-trigger="cart-changed from:body" hx-swap="outerHTML"
+      class="{% if cart_count %}grid{% else %}hidden{% endif %} absolute -right-1.5 -top-1.5 h-[18px] min-w-[18px] place-items-center rounded-full bg-gold px-1 font-mono text-[10px] font-medium leading-none text-ink tabular"
+      aria-label="Товаров в корзине: {{ cart_count }}">{{ cart_count }}</span>

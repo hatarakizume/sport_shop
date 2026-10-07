@@ -1,0 +1,28 @@
+{% load shop %}
+{% if results %}
+  <ul class="py-2">
+    {% for p in results %}
+      <li><a href="{% url 'web:product' p.slug %}" class="group flex items-center gap-4 px-5 py-3 hover:bg-graphite focus:bg-graphite focus:outline-none">
+        <span class="size-12 shrink-0 overflow-hidden rounded-xs border border-rule bg-lacquer-deep">{% if p.image %}<img src="{{ p.image.url }}" alt="" class="size-full object-cover">{% endif %}</span>
+        <span class="min-w-0 flex-1">
+          <span class="block truncate text-[15px] text-champagne group-hover:text-gold">{{ p.name }}</span>
+          <span class="eyebrow">{{ p.brand.name|default:"" }}{% if p.brand and p.category %} · {% endif %}{{ p.category.name|default:"" }}</span>
+        </span>
+        <span class="font-mono text-[13px] text-body tabular">{{ p.price|money }}</span>
+      </a></li>
+    {% endfor %}
+  </ul>
+  <a href="{% url 'web:catalog' %}?q={{ q|urlencode }}" class="flex items-center justify-between border-t border-rule px-5 py-3.5 text-[13px] text-gold hover:bg-graphite">Все результаты по «{{ q }}» <span>→</span></a>
+{% elif q|length >= 2 %}
+  <p class="px-5 py-10 text-center text-[14px] text-muted">Ничего не нашли по «{{ q }}». Попробуйте бренд или категорию.</p>
+{% else %}
+  <div class="px-5 py-5">
+    <p class="eyebrow">Быстрые переходы</p>
+    <div class="mt-3 flex flex-wrap gap-2">
+      <a href="{% url 'web:catalog' %}" class="chip">Весь каталог</a>
+      <a href="{% url 'web:catalog' %}?in_stock=1" class="chip">В наличии</a>
+      <a href="{% url 'web:catalog' %}?sort=price_asc" class="chip">Сначала дешевле</a>
+      {% for c in nav_categories|slice:":4" %}<a href="{% url 'web:catalog' %}?category={{ c.slug }}" class="chip">{{ c.name }}</a>{% endfor %}
+    </div>
+  </div>
+{% endif %}

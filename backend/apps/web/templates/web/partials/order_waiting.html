@@ -1,0 +1,11 @@
+<div id="order-waiting" hx-get="{% url 'web:order_status' order.pk %}" hx-trigger="every 3s" hx-swap="outerHTML"
+     class="flex items-center gap-4 rounded-sm border border-patina/40 bg-patina-deep/10 px-6 py-5">
+  <span class="relative grid size-10 place-items-center">
+    <span class="absolute inset-0 animate-spin rounded-full border border-patina/20 border-t-patina"></span>
+    <span class="size-1.5 rounded-full bg-patina"></span>
+  </span>
+  <div>
+    <p class="t-title">Подтверждаем оплату…</p>
+    <p class="text-[14px] text-muted">Stripe уже принял платёж, ждём подтверждения. Страница обновится сама.</p>
+  </div>
+</div>

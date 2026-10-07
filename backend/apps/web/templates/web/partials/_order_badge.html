@@ -1,0 +1,4 @@
+{% if order.status == "PAID" %}<span class="badge badge-patina"><span class="badge-dot"></span>{{ order.get_status_display }}</span>
+{% elif order.status == "RESERVED" %}<span class="badge badge-gold"><span class="badge-dot animate-pulse"></span>{{ order.get_status_display }}</span>
+{% elif order.status == "CANCELLED" or order.status == "EXPIRED" %}<span class="badge badge-muted"><span class="badge-dot"></span>{{ order.get_status_display }}</span>
+{% else %}<span class="badge badge-muted"><span class="badge-dot"></span>{{ order.get_status_display }}</span>{% endif %}

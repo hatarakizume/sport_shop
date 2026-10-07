@@ -1,0 +1,93 @@
+{% extends "web/base.html" %}
+{% block title %}Профиль{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-[1100px] px-4 pt-12 sm:px-6 lg:px-10"
+     x-data="{ tab: '{{ tab|escapejs }}', set(t) { this.tab = t; history.replaceState(null, '', '?tab=' + t) } }">
+
+  <div class="flex flex-wrap items-center gap-6">
+    <span class="relative grid size-20 place-items-center overflow-hidden rounded-full border border-rule-gold bg-raised">
+      {% if profile.avatar %}<img src="{{ profile.avatar.url }}" alt="" class="size-full object-cover">
+      {% else %}<span class="font-display text-[40px] font-light uppercase text-gold">{{ user.full_name|default:user.email|slice:":1" }}</span>{% endif %}
+    </span>
+    <div class="min-w-0 flex-1">
+      <p class="eyebrow">Аккаунт</p>
+      <h1 class="mt-2 truncate font-display text-[48px] font-light leading-none text-champagne">{{ user.full_name|default:"Без имени" }}</h1>
+      <p class="mt-1 text-[14px] text-faint">{{ user.email }} · с нами с {{ user.date_joined|date:"d.m.Y" }}</p>
+    </div>
+    <dl class="flex gap-8">
+      <a href="{% url 'web:orders' %}" class="group"><dt class="eyebrow">Заказов</dt><dd class="font-display text-[40px] font-light leading-none text-champagne group-hover:text-gold tabular">{{ orders_count }}</dd></a>
+      <div><dt class="eyebrow">Оплачено</dt><dd class="font-display text-[40px] font-light leading-none text-patina-text tabular">{{ paid_count }}</dd></div>
+    </dl>
+  </div>
+
+  <div class="mt-12 flex gap-1 border-b border-rule" role="tablist">
+    <button role="tab" type="button" @click="set('profile')" :aria-selected="tab === 'profile'" class="relative px-4 py-3 text-[14px] transition" :class="tab === 'profile' ? 'text-gold' : 'text-muted hover:text-champagne'">Профиль<span class="absolute inset-x-0 -bottom-px h-px bg-gold transition-transform duration-300" :class="tab === 'profile' ? 'scale-x-100' : 'scale-x-0'"></span></button>
+    <button role="tab" type="button" @click="set('addresses')" :aria-selected="tab === 'addresses'" class="relative px-4 py-3 text-[14px] transition" :class="tab === 'addresses' ? 'text-gold' : 'text-muted hover:text-champagne'">Адреса <span class="font-mono text-[11px] text-faint">{{ addresses|length }}</span><span class="absolute inset-x-0 -bottom-px h-px bg-gold transition-transform duration-300" :class="tab === 'addresses' ? 'scale-x-100' : 'scale-x-0'"></span></button>
+    <button role="tab" type="button" @click="set('security')" :aria-selected="tab === 'security'" class="relative px-4 py-3 text-[14px] transition" :class="tab === 'security' ? 'text-gold' : 'text-muted hover:text-champagne'">Безопасность<span class="absolute inset-x-0 -bottom-px h-px bg-gold transition-transform duration-300" :class="tab === 'security' ? 'scale-x-100' : 'scale-x-0'"></span></button>
+  </div>
+
+  {# ── профиль ── #}
+  <section x-show="tab === 'profile'" {% if tab != "profile" %}x-cloak{% endif %} class="mt-10" role="tabpanel">
+    <form method="post" action="{% url 'web:profile' %}" enctype="multipart/form-data" class="card grid gap-6 p-6 sm:grid-cols-2 sm:p-8">
+      {% csrf_token %}
+      {% include "web/partials/_field.html" with name="full_name" label="Имя и фамилия" value=user.full_name errors=errors.full_name autocomplete="name" span="sm:col-span-2" %}
+      <div><label class="field-label">Email</label><input value="{{ user.email }}" disabled class="input cursor-not-allowed text-faint"><p class="mt-2 text-[12px] text-faint">Используется для входа</p></div>
+      {% include "web/partials/_field.html" with name="phone" label="Телефон" value=profile.phone type="tel" autocomplete="tel" optional=1 %}
+      <div>
+        <label for="f-dob" class="field-label">Дата рождения <span class="normal-case tracking-normal text-mute-deep">— необязательно</span></label>
+        <input id="f-dob" type="date" name="date_of_birth" value="{{ profile.date_of_birth|date:'Y-m-d' }}" class="input">
+      </div>
+      <div x-data="{ name: '' }">
+        <span class="field-label">Аватар</span>
+        <label class="input flex cursor-pointer items-center justify-between gap-3 text-faint hover:text-champagne">
+          <span class="truncate" x-text="name || 'Выбрать изображение'">Выбрать изображение</span><span class="font-mono text-[11px] text-gold">Обзор</span>
+          <input type="file" name="avatar" accept="image/*" class="sr-only" @change="name = $event.target.files[0]?.name || ''">
+        </label>
+      </div>
+      <div class="sm:col-span-2"><button class="btn btn-primary btn-sm">Сохранить изменения</button></div>
+    </form>
+  </section>
+
+  {# ── адреса ── #}
+  <section x-show="tab === 'addresses'" {% if tab != "addresses" %}x-cloak{% endif %} class="mt-10" role="tabpanel" x-data="{ adding: {{ addr_errors|yesno:'true,false' }} }">
+    <div class="grid gap-3 sm:grid-cols-2">
+      {% for a in addresses %}
+        <div class="card flex flex-col p-6 {% if a.is_default %}border-rule-gold{% endif %}">
+          <div class="flex items-start justify-between gap-3">
+            <p class="t-title">{{ a.title|default:a.city }}</p>
+            {% if a.is_default %}<span class="badge badge-gold py-0.5">Основной</span>{% endif %}
+          </div>
+          <p class="mt-2 text-[14px] text-muted">{{ a.city }}, {{ a.street }}, д. {{ a.house }}{% if a.apartment %}, кв. {{ a.apartment }}{% endif %}<br>{{ a.postal_code }}</p>
+          {% if a.recipient_name or a.recipient_phone %}<p class="mt-2 font-mono text-[12px] text-faint">{{ a.recipient_name }} {{ a.recipient_phone }}</p>{% endif %}
+          <div class="mt-auto flex gap-4 pt-5 text-[13px]">
+            {% if not a.is_default %}<form method="post" action="{% url 'web:address_default' a.pk %}">{% csrf_token %}<button class="text-gold hover:text-gold-pale">Сделать основным</button></form>{% endif %}
+            <form method="post" action="{% url 'web:address_delete' a.pk %}">{% csrf_token %}<button class="text-faint hover:text-[oklch(72%_0.13_35)]">Удалить</button></form>
+          </div>
+        </div>
+      {% endfor %}
+      <button type="button" @click="adding = !adding" class="flex min-h-[160px] flex-col items-center justify-center gap-2 rounded-sm border border-dashed border-rule text-muted transition hover:border-rule-gold hover:text-gold">
+        <span class="font-display text-[40px] font-thin leading-none">+</span><span class="text-[14px]">Новый адрес</span>
+      </button>
+    </div>
+    <div x-cloak x-show="adding" x-transition.opacity class="card mt-4 p-6 sm:p-8">
+      <form method="post" action="{% url 'web:address_add' %}">{% csrf_token %}
+        {% include "web/partials/_address_form.html" %}
+        <button class="btn btn-primary btn-sm mt-7">Сохранить адрес</button>
+      </form>
+    </div>
+  </section>
+
+  {# ── безопасность ── #}
+  <section x-show="tab === 'security'" {% if tab != "security" %}x-cloak{% endif %} class="mt-10" role="tabpanel">
+    <form method="post" action="{% url 'web:profile_password' %}" class="card max-w-lg space-y-6 p-6 sm:p-8">
+      {% csrf_token %}
+      <p class="t-title">Смена пароля</p>
+      {% if pw_errors.general %}<p class="field-error">{{ pw_errors.general|join:" " }}</p>{% endif %}
+      {% include "web/auth/_password.html" with name="old_password" label="Текущий пароль" errors=pw_errors.old_password %}
+      {% include "web/auth/_password.html" with name="new_password" label="Новый пароль" errors=pw_errors.new_password autocomplete="new-password" meter=1 %}
+      {% include "web/auth/_password.html" with name="new_password_confirm" label="Повторите новый пароль" errors=pw_errors.new_password_confirm autocomplete="new-password" %}
+      <button class="btn btn-primary btn-sm">Обновить пароль</button>
+    </form>
+  </section>
+</div>
+{% endblock %}

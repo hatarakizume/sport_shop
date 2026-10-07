@@ -1,0 +1,15 @@
+<div class="grid gap-5 sm:grid-cols-6">
+  {% include "web/partials/_field.html" with name="title" label="Название" value=addr_data.title errors=addr_errors.title placeholder="Дом, Работа" optional=1 span="sm:col-span-2" %}
+  {% include "web/partials/_field.html" with name="recipient_name" label="Получатель" value=addr_data.recipient_name errors=addr_errors.recipient_name autocomplete="name" optional=1 span="sm:col-span-2" %}
+  {% include "web/partials/_field.html" with name="recipient_phone" label="Телефон" value=addr_data.recipient_phone errors=addr_errors.recipient_phone type="tel" autocomplete="tel" optional=1 span="sm:col-span-2" %}
+  {% include "web/partials/_field.html" with name="city" label="Город" value=addr_data.city errors=addr_errors.city autocomplete="address-level2" span="sm:col-span-3" %}
+  {% include "web/partials/_field.html" with name="street" label="Улица" value=addr_data.street errors=addr_errors.street autocomplete="address-line1" span="sm:col-span-3" %}
+  {% include "web/partials/_field.html" with name="house" label="Дом" value=addr_data.house errors=addr_errors.house inputmode="numeric" span="sm:col-span-2" %}
+  {% include "web/partials/_field.html" with name="apartment" label="Квартира" value=addr_data.apartment errors=addr_errors.apartment inputmode="numeric" optional=1 span="sm:col-span-2" %}
+  {% include "web/partials/_field.html" with name="postal_code" label="Индекс" value=addr_data.postal_code errors=addr_errors.postal_code inputmode="numeric" autocomplete="postal-code" hint="6 цифр" span="sm:col-span-2" %}
+  <label class="flex cursor-pointer items-center gap-3 text-[14px] sm:col-span-6">
+    <input type="checkbox" name="is_default" class="size-[18px] accent-[var(--color-gold)]" {% if addr_data.is_default %}checked{% endif %}>
+    Сделать адресом по умолчанию
+  </label>
+  {% if addr_errors.general %}<p class="field-error sm:col-span-6">{{ addr_errors.general|join:" " }}</p>{% endif %}
+</div>

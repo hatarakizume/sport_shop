@@ -1,0 +1,17 @@
+{% extends "web/base.html" %}
+{% block title %}Страница не найдена{% endblock %}
+{% block content %}
+<section class="relative overflow-hidden">
+  <div class="calib absolute inset-0 opacity-40 [mask-image:radial-gradient(circle_at_center,black,transparent_70%)]"></div>
+  <div class="relative mx-auto flex min-h-[70vh] max-w-[1320px] flex-col items-center justify-center px-4 text-center">
+    <p class="eyebrow">Ошибка 404</p>
+    <p class="mt-4 font-display text-[clamp(7rem,22vw,14rem)] font-thin leading-none text-gold tabular">404</p>
+    <h1 class="t-headline mt-2">Такой страницы нет</h1>
+    <p class="mt-4 max-w-md text-muted">Возможно, товар сняли с продажи или ссылка устарела.</p>
+    <div class="mt-10 flex flex-wrap justify-center gap-3">
+      <a href="{% url 'web:catalog' %}" class="btn btn-primary sheen">В каталог</a>
+      <a href="{% url 'web:home' %}" class="btn btn-secondary">На главную</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

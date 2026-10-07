@@ -1,0 +1,90 @@
+{% extends "web/base.html" %}
+{% load shop %}
+{% block title %}Оформление{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-[1320px] px-4 pt-10 sm:px-6 lg:px-10">
+  {% include "web/partials/_steps.html" with current=2 %}
+  <h1 class="t-headline mt-8">Куда доставить</h1>
+
+  <div class="mt-10 grid gap-10 lg:grid-cols-12">
+    <div class="lg:col-span-7" x-data="{ adding: {{ show_address_form|yesno:'true,false' }} }">
+      {% if addresses %}
+      <form id="order-form" method="post" action="{% url 'web:checkout' %}" class="space-y-3">
+        {% csrf_token %}
+        <fieldset class="space-y-3">
+          <legend class="sr-only">Адрес доставки</legend>
+          {% for a in addresses %}
+          <label class="group flex cursor-pointer gap-4 rounded-sm border border-rule bg-raised p-5 transition hover:border-[oklch(78%_0_0/0.3)] has-[:checked]:border-gold has-[:checked]:bg-gold/[0.04]">
+            <input type="radio" name="address_id" value="{{ a.pk }}" class="peer sr-only" {% if a.pk == selected_address %}checked{% endif %} required>
+            <span class="mt-1 grid size-5 shrink-0 place-items-center rounded-full border border-rule transition peer-checked:border-gold peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-patina after:size-2.5 after:scale-0 after:rounded-full after:bg-gold after:transition peer-checked:after:scale-100"></span>
+            <span class="min-w-0 flex-1">
+              <span class="flex items-center gap-3">
+                <span class="t-title">{{ a.title|default:a.city }}</span>
+                {% if a.is_default %}<span class="badge badge-muted py-0.5">По умолчанию</span>{% endif %}
+              </span>
+              <span class="mt-1 block text-[14px] text-muted">{{ a.city }}, {{ a.street }}, д. {{ a.house }}{% if a.apartment %}, кв. {{ a.apartment }}{% endif %} · {{ a.postal_code }}</span>
+              {% if a.recipient_name or a.recipient_phone %}<span class="mt-1 block font-mono text-[12px] text-faint">{{ a.recipient_name }} {{ a.recipient_phone }}</span>{% endif %}
+            </span>
+          </label>
+          {% endfor %}
+        </fieldset>
+      </form>
+      <button type="button" @click="adding = !adding" class="mt-4 flex w-full items-center justify-center gap-2 rounded-sm border border-dashed border-rule py-4 text-[14px] text-muted transition hover:border-rule-gold hover:text-gold" :aria-expanded="adding">
+        <span x-text="adding ? '— Скрыть форму' : '+ Новый адрес'">+ Новый адрес</span>
+      </button>
+      {% endif %}
+
+      <div x-cloak x-show="adding" x-transition.opacity class="card mt-4 p-6 sm:p-8">
+        <p class="t-title">Новый адрес</p>
+        <form method="post" action="{% url 'web:checkout' %}" class="mt-6">
+          {% csrf_token %}<input type="hidden" name="action" value="add_address">
+          {% include "web/partials/_address_form.html" %}
+          <button class="btn btn-secondary btn-sm mt-7">Сохранить адрес</button>
+        </form>
+      </div>
+    </div>
+
+    <aside class="lg:col-span-5">
+      <div class="panel sticky top-24 p-7">
+        <div class="flex items-center justify-between">
+          <p class="mono-label">Ваш заказ · {{ count }} шт.</p>
+          <a href="{% url 'web:cart' %}" class="text-[13px] text-gold hover:text-gold-pale">Изменить</a>
+        </div>
+        <ul class="mt-6 max-h-72 space-y-4 overflow-y-auto pr-1">
+          {% for item in items %}{% with p=item.product_variant.product %}
+          <li class="flex items-center gap-4">
+            <span class="relative size-14 shrink-0 overflow-hidden rounded-xs border border-rule bg-lacquer-deep">
+              {% if p.image %}<img src="{{ p.image.url }}" alt="" class="size-full object-cover">{% endif %}
+              <span class="absolute -right-0 -top-0 grid size-5 place-items-center rounded-bl-xs bg-gold font-mono text-[10px] text-ink">{{ item.quantity }}</span>
+            </span>
+            <span class="min-w-0 flex-1"><span class="block truncate text-[14px] text-champagne">{{ p.name }}</span><span class="font-mono text-[11px] uppercase tracking-[0.14em] text-faint">Размер {{ item.product_variant.size }}</span></span>
+            <span class="font-mono text-[13px] text-body tabular">{{ item.subtotal|money }}</span>
+          </li>
+          {% endwith %}{% endfor %}
+        </ul>
+        <div class="hairline my-6"></div>
+        <div class="flex items-baseline justify-between">
+          <span class="t-title">К оплате</span>
+          <span class="font-display text-[48px] font-light leading-none text-champagne tabular">{{ total|money }}</span>
+        </div>
+
+        {% if order_errors %}
+          <div class="mt-6 rounded-sm border border-vermilion/50 bg-vermilion/[0.06] px-4 py-3 text-[14px] text-champagne" role="alert">
+            {% for e in order_errors %}<p>{{ e }}</p>{% endfor %}
+          </div>
+        {% endif %}
+
+        {% if addresses %}
+          <button form="order-form" class="btn btn-primary sheen mt-8 w-full">Зарезервировать и перейти к оплате</button>
+        {% else %}
+          <button class="btn btn-primary mt-8 w-full" disabled>Сначала добавьте адрес</button>
+        {% endif %}
+        <div class="mt-5 flex items-start gap-3 rounded-sm border border-patina/30 bg-patina-deep/10 p-4">
+          <span class="mt-1.5 size-1.5 shrink-0 rounded-full bg-patina animate-pulse-dot"></span>
+          <p class="text-[13px] leading-relaxed text-body">Товары будут закреплены за вами на <strong>15 минут</strong>. Оплата — на следующем шаге через Stripe.</p>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+{% endblock %}

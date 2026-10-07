@@ -1,0 +1,49 @@
+{% extends "web/base.html" %}
+{% load shop %}
+{% block title %}Мои заказы{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-[1100px] px-4 pt-12 sm:px-6 lg:px-10">
+  <p class="eyebrow">Аккаунт</p>
+  <h1 class="t-headline mt-4">Заказы</h1>
+
+  {% if orders %}
+  <div class="mt-10 overflow-hidden rounded-sm border border-rule">
+    <div class="hidden grid-cols-[110px_1fr_140px_150px_40px] gap-6 border-b border-rule bg-lacquer-deep px-6 py-3 font-mono text-[10px] uppercase tracking-[0.22em] text-faint md:grid">
+      <span>Номер</span><span>Состав</span><span class="text-right">Сумма</span><span>Статус</span><span></span>
+    </div>
+    <ul class="divide-y divide-rule">
+      {% for order in orders %}
+      <li>
+        <a href="{% url 'web:order' order.pk %}" class="group grid grid-cols-[1fr_auto] items-center gap-x-6 gap-y-3 bg-raised px-6 py-5 transition hover:bg-graphite md:grid-cols-[110px_1fr_140px_150px_40px]">
+          <span>
+            <span class="block font-mono text-[15px] text-champagne tabular">№{{ order.pk|stringformat:"04d" }}</span>
+            <span class="font-mono text-[11px] text-faint">{{ order.created_at|date:"d.m.Y H:i" }}</span>
+          </span>
+          <span class="order-3 col-span-2 flex items-center gap-2 md:order-none md:col-span-1">
+            <span class="flex -space-x-3">
+              {% for item in order.items.all|slice:":4" %}{% with p=item.product_variant.product %}
+                <span class="size-10 overflow-hidden rounded-full border-2 border-raised bg-lacquer-deep group-hover:border-graphite">{% if p.image %}<img src="{{ p.image.url }}" alt="" class="size-full object-cover">{% endif %}</span>
+              {% endwith %}{% endfor %}
+            </span>
+            <span class="ml-2 truncate text-[14px] text-muted">{% for item in order.items.all|slice:":2" %}{{ item.product_variant.product.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% if order.items.all|length > 2 %} и ещё {{ order.items.all|length|add:-2 }}{% endif %}</span>
+          </span>
+          <span class="text-right font-mono text-[14px] text-champagne tabular">{{ order.total_price|money }}</span>
+          <span class="order-4 flex flex-col items-start gap-1 md:order-none">
+            {% include "web/partials/_order_badge.html" %}
+            {% if order.seconds_left %}<span class="font-mono text-[11px] text-gold tabular" x-data="countdown({{ order.seconds_left }})"><span x-text="`${mm}:${ss}`">{{ order.seconds_left|mmss }}</span> на оплату</span>{% endif %}
+          </span>
+          <span class="hidden text-right text-faint transition group-hover:translate-x-1 group-hover:text-gold md:block">→</span>
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% else %}
+  <div class="mt-10 flex flex-col items-center rounded-sm border border-dashed border-rule px-6 py-28 text-center">
+    <p class="font-display text-[64px] font-thin leading-none text-champagne">Заказов нет</p>
+    <p class="mt-4 max-w-sm text-muted">Здесь будет история покупок и статусы оплаты.</p>
+    <a href="{% url 'web:catalog' %}" class="btn btn-primary sheen mt-10">В каталог</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,124 @@
+{% extends "web/base.html" %}
+{% block title %}{% if category %}{{ category.name }}{% elif q %}Поиск «{{ q }}»{% else %}Каталог{% endif %}{% endblock %}
+
+{% block content %}
+{% url 'web:catalog' as catalog_url %}
+<div x-data="{ filters: false }" @keydown.escape.window="filters = false" class="mx-auto max-w-[1320px] px-4 pt-10 sm:px-6 lg:px-10">
+
+  <nav class="font-mono text-[11px] uppercase tracking-[0.18em] text-faint" aria-label="Хлебные крошки">
+    <a href="{% url 'web:home' %}" class="hover:text-gold">Главная</a><span class="mx-2 text-mute-deep">/</span>
+    {% if category %}<a href="{{ catalog_url }}" class="hover:text-gold">Каталог</a><span class="mx-2 text-mute-deep">/</span><span class="text-champagne">{{ category.name }}</span>{% else %}<span class="text-champagne">Каталог</span>{% endif %}
+  </nav>
+
+  <div id="catalog-top" class="mt-6 flex scroll-mt-24 flex-wrap items-end justify-between gap-6 border-b border-rule pb-8">
+    <h1 class="t-headline">{% if category %}{{ category.name }}{% elif q %}«{{ q }}»{% else %}Каталог{% endif %}</h1>
+    <div class="flex items-center gap-3">
+      <button type="button" @click="filters = true" class="btn btn-secondary btn-sm lg:hidden">
+        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+        Фильтры
+      </button>
+      <label class="sr-only" for="sort">Сортировка</label>
+      <div class="relative">
+        <select id="sort" name="sort" form="filters"
+                hx-get="{{ catalog_url }}" hx-include="#filters" hx-target="#results" hx-push-url="true" hx-indicator="#results"
+                class="input h-11 appearance-none py-0 pr-10 font-mono text-[12px] uppercase tracking-[0.12em]">
+          {% for key, label in sorts %}<option value="{{ key }}" {% if key == sort %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+        <span class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-gold">▼</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-10 grid gap-10 lg:grid-cols-[260px_1fr]">
+    {# ── фильтры: колонка на десктопе, выезжающая панель на мобильном ── #}
+    <div x-cloak x-show="filters" x-transition.opacity class="fixed inset-0 z-50 bg-lacquer-deep/80 lg:hidden" @click="filters = false"></div>
+    <aside :class="filters ? 'translate-x-0' : '-translate-x-full'"
+           class="fixed inset-y-0 left-0 z-50 w-[88%] max-w-sm overflow-y-auto border-r border-rule bg-raised px-6 py-6 transition-transform duration-500 ease-ks
+                  lg:sticky lg:top-24 lg:z-auto lg:h-fit lg:w-auto lg:max-w-none lg:translate-x-0 lg:overflow-visible lg:border-0 lg:bg-transparent lg:p-0 lg:transition-none">
+      <div class="mb-6 flex items-center justify-between lg:hidden">
+        <p class="mono-label">Фильтры</p>
+        <button type="button" @click="filters = false" class="grid size-11 place-items-center text-champagne" aria-label="Закрыть">✕</button>
+      </div>
+
+      <form id="filters" action="{{ catalog_url }}" method="get"
+            hx-get="{{ catalog_url }}" hx-target="#results" hx-swap="innerHTML transition:true show:#catalog-top:top"
+            hx-trigger="change, input from:#f-q delay:350ms, input from:.f-price delay:500ms" hx-push-url="true" hx-indicator="#results"
+            class="space-y-9">
+        <div>
+          <label for="f-q" class="field-label">Поиск</label>
+          <input id="f-q" name="q" value="{{ q }}" type="search" placeholder="Название или бренд" class="input">
+        </div>
+
+        <fieldset>
+          <legend class="field-label">Категория</legend>
+          <div class="space-y-1">
+            <label class="flex cursor-pointer items-center justify-between rounded-xs px-3 py-2 text-[14px] transition hover:bg-graphite has-[:checked]:bg-graphite has-[:checked]:text-gold">
+              <span>Все</span><input type="radio" name="category" value="" class="sr-only" {% if not category %}checked{% endif %}>
+            </label>
+            {% for c in categories %}
+              <label class="flex cursor-pointer items-center justify-between rounded-xs px-3 py-2 text-[14px] transition hover:bg-graphite has-[:checked]:bg-graphite has-[:checked]:text-gold">
+                <span>{{ c.name }}</span><input type="radio" name="category" value="{{ c.slug }}" class="sr-only" {% if category.slug == c.slug %}checked{% endif %}>
+              </label>
+              {% for ch in c.children.all %}
+                <label class="ml-4 flex cursor-pointer items-center justify-between rounded-xs border-l border-rule px-3 py-1.5 text-[13px] text-muted transition hover:bg-graphite has-[:checked]:text-gold">
+                  <span>{{ ch.name }}</span><input type="radio" name="category" value="{{ ch.slug }}" class="sr-only" {% if category.slug == ch.slug %}checked{% endif %}>
+                </label>
+              {% endfor %}
+            {% endfor %}
+          </div>
+        </fieldset>
+
+        {% if sizes %}
+        <fieldset>
+          <legend class="field-label">Размер в наличии</legend>
+          <div class="flex flex-wrap gap-2">
+            {% for s in sizes %}
+              <label><input type="checkbox" name="size" value="{{ s }}" class="peer sr-only" {% if s in selected_sizes %}checked{% endif %}><span class="chip">{{ s }}</span></label>
+            {% endfor %}
+          </div>
+        </fieldset>
+        {% endif %}
+
+        {% if brands %}
+        <fieldset>
+          <legend class="field-label">Бренд</legend>
+          <div class="space-y-2.5">
+            {% for b in brands %}
+              <label class="group flex cursor-pointer items-center gap-3 text-[14px]">
+                <input type="checkbox" name="brand" value="{{ b.slug }}" class="peer sr-only" {% if b.slug in brand_slugs %}checked{% endif %}>
+                <span class="grid size-[18px] place-items-center rounded-xs border border-rule transition peer-checked:border-gold peer-checked:bg-gold peer-focus-visible:outline-2 peer-focus-visible:outline-patina [&>svg]:opacity-0 peer-checked:[&>svg]:opacity-100">
+                  <svg class="size-3 text-ink" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 5 5 9-10"/></svg>
+                </span>
+                <span class="text-body transition group-hover:text-champagne peer-checked:text-champagne">{{ b.name }}</span>
+              </label>
+            {% endfor %}
+          </div>
+        </fieldset>
+        {% endif %}
+
+        <fieldset>
+          <legend class="field-label">Цена</legend>
+          <div class="grid grid-cols-2 gap-2">
+            <input name="price_min" value="{{ price_min }}" inputmode="numeric" pattern="[0-9]*" placeholder="от {{ bounds.lo|floatformat:0|default:'0' }}" class="input f-price py-2.5 font-mono text-[13px]" aria-label="Цена от">
+            <input name="price_max" value="{{ price_max }}" inputmode="numeric" pattern="[0-9]*" placeholder="до {{ bounds.hi|floatformat:0|default:'∞' }}" class="input f-price py-2.5 font-mono text-[13px]" aria-label="Цена до">
+          </div>
+        </fieldset>
+
+        <label class="flex cursor-pointer items-center justify-between gap-4">
+          <span class="text-[14px] text-body">Только в наличии</span>
+          <input type="checkbox" name="in_stock" value="1" class="peer sr-only" {% if in_stock %}checked{% endif %}>
+          <span class="relative h-6 w-11 rounded-full border border-rule bg-lacquer-deep transition peer-checked:border-patina peer-checked:bg-patina-deep/40 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-4 peer-focus-visible:outline-patina
+                       after:absolute after:left-1 after:top-1/2 after:size-4 after:-translate-y-1/2 after:rounded-full after:bg-faint after:transition after:duration-300 peer-checked:after:translate-x-5 peer-checked:after:bg-patina"></span>
+        </label>
+
+        <noscript><button class="btn btn-primary btn-sm w-full">Применить</button></noscript>
+        <button type="button" @click="filters = false" class="btn btn-primary btn-sm w-full lg:hidden">Показать</button>
+      </form>
+    </aside>
+
+    <section id="results" aria-live="polite" class="min-w-0 transition-opacity">
+      {% include "web/partials/catalog_results.html" %}
+    </section>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "web/auth/_layout.html" %}
+{% block title %}Вход{% endblock %}
+{% block form %}
+<p class="eyebrow">Аккаунт</p>
+<h1 class="t-headline mt-4">Вход</h1>
+<p class="mt-3 text-muted">Нет аккаунта? <a href="{% url 'web:register' %}{% if next %}?next={{ next|urlencode }}{% endif %}" class="link">Создайте за минуту</a></p>
+<form method="post" class="mt-10 space-y-6" x-data="{ busy: false }" @submit="busy = true">
+  {% csrf_token %}<input type="hidden" name="next" value="{{ next }}">
+  {% if error %}<div class="rounded-sm border border-vermilion/50 bg-vermilion/[0.06] px-4 py-3 text-[14px] text-champagne" role="alert">{{ error }}</div>{% endif %}
+  {% include "web/partials/_field.html" with name="email" label="Email" type="email" value=email autocomplete="email" %}
+  {% include "web/auth/_password.html" with name="password" label="Пароль" forgot=1 %}
+  <label class="flex cursor-pointer items-center gap-3 text-[14px] text-muted"><input type="checkbox" name="remember" checked class="size-[18px] accent-[var(--color-gold)]">Запомнить меня</label>
+  <button class="btn btn-primary sheen w-full" :disabled="busy"><span x-text="busy ? 'Входим…' : 'Войти'">Войти</span></button>
+</form>
+{% endblock %}

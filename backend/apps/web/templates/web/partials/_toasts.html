@@ -1,0 +1,15 @@
+<div class="pointer-events-none fixed inset-x-4 bottom-4 z-[80] flex flex-col items-end gap-3 sm:inset-x-auto sm:right-6 sm:bottom-auto sm:top-20" aria-live="polite">
+  <template x-for="t in toasts" :key="t.id">
+    <div x-transition:enter="transition duration-300 ease-ks" x-transition:enter-start="opacity-0 translate-y-3"
+         x-transition:leave="transition duration-200" x-transition:leave-end="opacity-0 translate-x-4"
+         class="pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-sm border bg-lacquer-deep px-4 py-3.5 shadow-setback"
+         :class="{ 'border-patina/50': t.level === 'success', 'border-vermilion/60': t.level === 'error', 'border-rule-gold': t.level === 'warning', 'border-rule': t.level === 'info' }">
+      <span class="mt-2 size-1.5 shrink-0 rounded-full"
+            :class="{ 'bg-patina shadow-patina': t.level === 'success', 'bg-vermilion': t.level === 'error', 'bg-gold': t.level === 'warning', 'bg-muted': t.level === 'info' }"></span>
+      <p class="flex-1 text-[14px] leading-relaxed text-champagne" x-text="t.message"></p>
+      <button type="button" @click="dismiss(t.id)" class="-mr-1 grid size-7 place-items-center text-faint hover:text-champagne" aria-label="Закрыть">
+        <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+  </template>
+</div>

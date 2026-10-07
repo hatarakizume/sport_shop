@@ -1,0 +1,90 @@
+{% url 'web:catalog' as catalog_url %}
+<header class="sticky top-0 z-40 border-b transition-colors duration-300"
+        :class="scrolled ? 'border-rule bg-lacquer' : 'border-transparent bg-lacquer/0'"
+        x-data="{ menu: false }" @keydown.escape.window="menu = false">
+  <div class="mx-auto flex h-[72px] max-w-[1320px] items-center gap-6 px-4 sm:px-6 lg:px-10">
+    <a href="{% url 'web:home' %}" class="flex items-center gap-3" aria-label="{{ SHOP_NAME }} — на главную">
+      {% include "web/partials/_mark.html" %}
+      <span class="wordmark hidden sm:block">{{ SHOP_NAME }}</span>
+    </a>
+
+    <nav class="ml-6 hidden items-center gap-7 lg:flex" aria-label="Основная навигация">
+      <a href="{{ catalog_url }}" class="nav-link" {% if request.path == catalog_url and not request.GET.category %}aria-current="page"{% endif %}>Каталог</a>
+      {% for c in nav_categories|slice:":4" %}
+        <a href="{{ catalog_url }}?category={{ c.slug }}" class="nav-link" {% if request.GET.category == c.slug %}aria-current="page"{% endif %}>{{ c.name }}</a>
+      {% endfor %}
+    </nav>
+
+    <div class="ml-auto flex items-center gap-1 sm:gap-2">
+      <button type="button" @click="openSearch()"
+              class="group hidden h-11 items-center gap-3 rounded-xs border border-rule px-3.5 text-[13px] text-faint transition hover:border-rule-gold hover:text-champagne md:flex">
+        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>
+        Поиск
+        <kbd class="ml-4 rounded-xs border border-rule px-1.5 py-0.5 font-mono text-[10px] text-mute-deep group-hover:text-faint">Ctrl K</kbd>
+      </button>
+      <button type="button" @click="openSearch()" class="grid size-11 place-items-center text-champagne hover:text-gold md:hidden" aria-label="Поиск">
+        <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>
+      </button>
+
+      {% if user.is_authenticated %}
+        <div class="relative" x-data="{ open: false }" @click.outside="open = false" @keydown.escape="open = false">
+          <button type="button" @click="open = !open" :aria-expanded="open"
+                  class="grid size-11 place-items-center text-champagne transition hover:text-gold" aria-label="Аккаунт">
+            <span class="grid size-8 place-items-center rounded-full border border-rule-gold font-mono text-[11px] uppercase text-gold">{{ user.full_name|default:user.email|slice:":1" }}</span>
+          </button>
+          <div x-cloak x-show="open" x-transition.origin.top.right
+               class="absolute right-0 top-full mt-2 w-60 overflow-hidden rounded-sm border border-rule bg-raised shadow-setback">
+            <div class="border-b border-rule px-4 py-3">
+              <p class="truncate text-[14px] text-champagne">{{ user.full_name|default:"Профиль" }}</p>
+              <p class="truncate text-[12px] text-faint">{{ user.email }}</p>
+            </div>
+            <a href="{% url 'web:orders' %}" class="flex items-center justify-between px-4 py-2.5 text-[14px] hover:bg-graphite hover:text-gold">Мои заказы <span class="font-mono text-[11px] text-faint">→</span></a>
+            <a href="{% url 'web:profile' %}" class="flex items-center justify-between px-4 py-2.5 text-[14px] hover:bg-graphite hover:text-gold">Профиль и адреса <span class="font-mono text-[11px] text-faint">→</span></a>
+            {% if user.is_staff %}<a href="{% url 'admin:index' %}" class="flex px-4 py-2.5 text-[14px] hover:bg-graphite hover:text-gold">Админка</a>{% endif %}
+            <form method="post" action="{% url 'web:logout' %}" class="border-t border-rule">{% csrf_token %}
+              <button class="w-full px-4 py-2.5 text-left text-[14px] text-faint hover:bg-graphite hover:text-[oklch(72%_0.13_35)]">Выйти</button>
+            </form>
+          </div>
+        </div>
+      {% else %}
+        <a href="{% url 'web:login' %}?next={{ request.get_full_path|urlencode }}" class="nav-link hidden px-2 sm:block">Войти</a>
+      {% endif %}
+
+      <button type="button" @click="openCart()" class="relative grid size-11 place-items-center text-champagne transition hover:text-gold" aria-label="Корзина">
+        <svg class="size-[22px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 8h14l-1.2 11.2a1 1 0 0 1-1 .8H7.2a1 1 0 0 1-1-.8L5 8Z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg>
+        {% include "web/partials/cart_badge.html" %}
+      </button>
+
+      <button type="button" @click="menu = true" class="grid size-11 place-items-center text-champagne lg:hidden" aria-label="Меню">
+        <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 8h16M4 16h16"/></svg>
+      </button>
+    </div>
+  </div>
+
+  {# мобильное меню #}
+  <div x-cloak x-show="menu" class="fixed inset-0 z-50 lg:hidden" x-trap.noscroll="menu">
+    <div x-show="menu" x-transition.opacity class="absolute inset-0 bg-lacquer-deep/80" @click="menu = false"></div>
+    <nav x-show="menu" x-transition:enter="transition duration-300 ease-ks" x-transition:enter-start="translate-x-full" x-transition:leave="transition duration-200" x-transition:leave-end="translate-x-full"
+         class="absolute inset-y-0 right-0 flex w-[86%] max-w-sm flex-col border-l border-rule bg-raised px-6 pb-8 pt-5">
+      <div class="flex items-center justify-between">
+        <span class="eyebrow">Меню</span>
+        <button @click="menu = false" class="grid size-11 place-items-center text-champagne" aria-label="Закрыть"><svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </div>
+      <div class="mt-6 flex flex-col">
+        <a href="{{ catalog_url }}" class="border-b border-rule py-4 font-display text-[32px] font-light text-champagne">Каталог</a>
+        {% for c in nav_categories %}
+          <a href="{{ catalog_url }}?category={{ c.slug }}" class="flex items-center justify-between border-b border-rule py-3.5 text-[16px] text-body hover:text-gold">{{ c.name }}<span class="font-mono text-[11px] text-faint">{{ forloop.counter|stringformat:"02d" }}</span></a>
+        {% endfor %}
+      </div>
+      <div class="mt-auto grid gap-3">
+        {% if user.is_authenticated %}
+          <a href="{% url 'web:orders' %}" class="btn btn-secondary btn-sm">Мои заказы</a>
+          <a href="{% url 'web:profile' %}" class="btn btn-ghost">Профиль</a>
+        {% else %}
+          <a href="{% url 'web:login' %}" class="btn btn-primary">Войти</a>
+          <a href="{% url 'web:register' %}" class="btn btn-secondary btn-sm">Создать аккаунт</a>
+        {% endif %}
+      </div>
+    </nav>
+  </div>
+</header>

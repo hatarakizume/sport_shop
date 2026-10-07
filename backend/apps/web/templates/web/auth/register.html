@@ -1,0 +1,17 @@
+{% extends "web/auth/_layout.html" %}
+{% block title %}Регистрация{% endblock %}
+{% block aside_title %}Один аккаунт —<br><span class="text-gold">все заказы.</span>{% endblock %}
+{% block form %}
+<p class="eyebrow">Новый аккаунт</p>
+<h1 class="t-headline mt-4">Регистрация</h1>
+<p class="mt-3 text-muted">Уже есть аккаунт? <a href="{% url 'web:login' %}{% if next %}?next={{ next|urlencode }}{% endif %}" class="link">Войти</a></p>
+<form method="post" class="mt-10 space-y-6" x-data="{ busy: false }" @submit="busy = true">
+  {% csrf_token %}<input type="hidden" name="next" value="{{ next }}">
+  {% if errors.general %}<div class="rounded-sm border border-vermilion/50 bg-vermilion/[0.06] px-4 py-3 text-[14px]" role="alert">{{ errors.general|join:" " }}</div>{% endif %}
+  {% include "web/partials/_field.html" with name="full_name" label="Имя и фамилия" value=data.full_name errors=errors.full_name autocomplete="name" %}
+  {% include "web/partials/_field.html" with name="email" label="Email" type="email" value=data.email errors=errors.email autocomplete="email" %}
+  {% include "web/auth/_password.html" with name="password" label="Пароль" errors=errors.password autocomplete="new-password" meter=1 %}
+  {% include "web/auth/_password.html" with name="password_confirm" label="Повторите пароль" errors=errors.password_confirm autocomplete="new-password" %}
+  <button class="btn btn-primary sheen w-full" :disabled="busy"><span x-text="busy ? 'Создаём…' : 'Создать аккаунт'">Создать аккаунт</span></button>
+</form>
+{% endblock %}

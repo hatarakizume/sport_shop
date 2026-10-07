@@ -1,0 +1,136 @@
+/* Токены Neo Kinpaku (DESIGN.md) -> Tailwind v4.
+   Один файл для двух режимов: в DEBUG подключается инлайн в CDN-сборку,
+   на сервере собирается Tailwind CLI в static/css/app.css (см. backend/Dockerfile). */
+@theme {
+    --font-display: "Alumni Sans", "Albert Sans", Arial, sans-serif;
+    --font-sans: "Albert Sans", "Avenir Next", "Helvetica Neue", Arial, system-ui, sans-serif;
+    --font-mono: SFMono-Regular, "Roboto Mono", Consolas, monospace;
+
+    /* бренд */
+    --color-gold: oklch(84% 0.19 80.46);
+    --color-gold-pale: oklch(86% 0.07 84);
+    --color-gold-rich: oklch(77% 0.13 82);
+    --color-gold-deep: oklch(61% 0.085 78);
+    --color-gold-glint: oklch(95% 0.04 84);
+    --color-patina: oklch(70% 0.12 188);
+    --color-patina-pale: oklch(82% 0.07 188);
+    --color-patina-deep: oklch(49% 0.08 188);
+    --color-patina-text: oklch(76% 0.088 190);
+    --color-ink: oklch(14% 0.018 95);
+
+    /* поверхности */
+    --color-lacquer: oklch(7% 0.006 95);
+    --color-lacquer-deep: oklch(4% 0.004 95);
+    --color-raised: oklch(11% 0.006 95);
+    --color-graphite: oklch(15% 0.008 95);
+    --color-graphite-2: oklch(19% 0.008 95);
+
+    /* текст */
+    --color-champagne: oklch(91% 0 0);
+    --color-body: oklch(88% 0 0);
+    --color-muted: oklch(72% 0 0);
+    --color-faint: oklch(62% 0 0);
+    --color-mute-deep: oklch(52% 0 0);
+
+    /* линии и состояния */
+    --color-rule: oklch(78% 0 0 / 0.16);
+    --color-rule-gold: oklch(74% 0.09 82 / 0.6);
+    --color-vermilion: oklch(58% 0.15 35);
+
+    --ease-ks: cubic-bezier(0.2, 0.7, 0.2, 1);
+    --shadow-setback: 0 24px 70px oklch(2% 0.004 95 / 0.42);
+    --shadow-cta: 0 18px 48px oklch(2% 0.004 95 / 0.4), inset 0 1px 0 oklch(98% 0.035 84 / 0.55);
+    --shadow-patina: 0 0 22px oklch(70% 0.105 190 / 0.24);
+
+    --animate-marquee: marquee 40s linear infinite;
+    --animate-pulse-dot: pulse-dot 2.4s var(--ease-ks) infinite;
+    --animate-sheen: sheen 3.2s var(--ease-ks) infinite;
+
+    @keyframes marquee { to { transform: translateX(-50%); } }
+    @keyframes pulse-dot {
+      0%, 100% { box-shadow: 0 0 0 0 oklch(70% 0.12 188 / 0.55); }
+      50% { box-shadow: 0 0 0 6px oklch(70% 0.12 188 / 0); }
+    }
+    @keyframes sheen { 0% { transform: translateX(-120%); } 60%, 100% { transform: translateX(220%); } }
+  }
+
+  @layer base {
+    html { color-scheme: dark; scroll-behavior: smooth; }
+    body { line-height: 1.8; }
+    h1, h2, h3, h4 { text-wrap: balance; }
+    p { text-wrap: pretty; }
+    strong { color: var(--color-champagne); font-weight: 500; }
+    :focus-visible { outline: 2px solid var(--color-patina); outline-offset: 4px; border-radius: 2px; }
+    [x-cloak] { display: none !important; }
+    input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+    @view-transition { navigation: auto; }
+  }
+
+  @layer components {
+    /* типографика — правило инверсии веса: h1 = 100, h2 = 300 */
+    .t-display { @apply font-display font-thin text-champagne; font-size: clamp(3.4rem, 6.5vw, 5.6rem); line-height: 1.02; letter-spacing: -0.01em; }
+    .t-headline { @apply font-display font-light text-champagne; font-size: clamp(2.6rem, 4vw, 3.4rem); line-height: 1.04; }
+    .t-title { @apply font-sans text-[18px] font-medium leading-[1.35] text-champagne; }
+    .eyebrow { @apply font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-faint; }
+    .mono-label { @apply font-mono text-[11px] font-medium uppercase tracking-[0.22em] text-muted; }
+    .wordmark { @apply font-display text-[18px] font-normal uppercase leading-none tracking-[0.15em] text-champagne; }
+
+    /* кнопки */
+    .btn { @apply relative inline-flex min-h-[58px] cursor-pointer select-none items-center justify-center gap-3 overflow-hidden rounded-xs border px-[38px] text-[15px] font-medium leading-none transition duration-300 ease-ks disabled:cursor-not-allowed; }
+    .btn-sm { @apply min-h-11 px-5 text-[14px]; }
+    .btn-primary { @apply border-gold-deep bg-gold text-ink shadow-cta hover:-translate-y-0.5 hover:bg-gold-pale active:translate-y-0 active:bg-gold-rich disabled:translate-y-0 disabled:border-graphite-2 disabled:bg-graphite disabled:text-mute-deep disabled:shadow-none; }
+    .btn-secondary { @apply border-rule-gold bg-transparent text-gold hover:-translate-y-0.5 hover:border-patina hover:text-gold-pale disabled:border-rule disabled:text-mute-deep; }
+    .btn-ghost { @apply min-h-11 border-transparent px-2 text-gold hover:text-gold-pale; }
+    .btn-danger { @apply border-vermilion/60 bg-transparent text-[oklch(72%_0.13_35)] hover:border-vermilion hover:bg-vermilion/10; }
+    .sheen::after { content: ""; position: absolute; inset: 0; width: 40%; background: linear-gradient(100deg, transparent, oklch(98% 0.04 84 / 0.55), transparent); transform: translateX(-120%); pointer-events: none; }
+    .sheen:hover::after { animation: var(--animate-sheen); }
+
+    /* поверхности */
+    .card { @apply rounded-sm border border-rule bg-raised; }
+    .panel { @apply rounded-sm border border-rule bg-raised shadow-setback; }
+    .hairline { @apply h-px w-full bg-rule; }
+    .seam { height: 1px; background: linear-gradient(90deg, transparent, var(--color-gold-deep) 12%, var(--color-gold) 50%, var(--color-gold-deep) 88%, transparent); }
+    .calib { background-image: linear-gradient(var(--color-rule) 1px, transparent 1px), linear-gradient(90deg, var(--color-rule) 1px, transparent 1px); background-size: 64px 64px; }
+
+    /* формы */
+    .field-label { @apply mb-2 block font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-muted; }
+    .input { @apply block w-full rounded-sm border border-rule bg-lacquer-deep px-4 py-3.5 text-[15px] text-champagne transition duration-200 placeholder:text-mute-deep hover:border-[oklch(78%_0_0/0.28)] focus:border-rule-gold focus:outline-none focus-visible:outline-none aria-[invalid=true]:border-vermilion/70; }
+    .field-error { @apply mt-2 text-[13px] leading-snug text-[oklch(72%_0.13_35)]; }
+
+    /* статусы */
+    .badge { @apply inline-flex items-center gap-2 rounded-full border px-3 py-1 font-mono text-[11px] font-medium uppercase tracking-[0.14em]; }
+    .badge-dot { @apply size-1.5 rounded-full bg-current; }
+    .badge-gold { @apply border-rule-gold text-gold; }
+    .badge-patina { @apply border-patina/50 text-patina-text; }
+    .badge-muted { @apply border-rule text-faint; }
+    .badge-danger { @apply border-vermilion/50 text-[oklch(72%_0.13_35)]; }
+    .tag { @apply inline-flex items-center rounded-xs bg-lacquer-deep/90 px-2 py-1 font-mono text-[10px] font-medium uppercase tracking-[0.16em]; }
+
+    /* выбор размера */
+    .chip { @apply inline-flex min-h-11 min-w-12 cursor-pointer items-center justify-center rounded-xs border border-rule px-3 font-mono text-[13px] text-body transition duration-200 hover:border-rule-gold hover:text-champagne; }
+    .peer:checked + .chip, .chip.is-active { @apply border-gold bg-gold/10 text-gold; }
+    .peer:focus-visible + .chip { outline: 2px solid var(--color-patina); outline-offset: 3px; }
+    .peer:disabled + .chip { @apply cursor-not-allowed border-dashed text-mute-deep line-through hover:border-rule hover:text-mute-deep; }
+
+    .link { @apply text-gold underline decoration-gold/30 underline-offset-4 transition hover:decoration-gold; }
+    .nav-link { @apply relative text-[14px] text-champagne transition-colors duration-200 hover:text-gold; }
+    .nav-link::after { content: ""; @apply absolute -bottom-1.5 left-0 h-px w-full origin-left scale-x-0 bg-gold transition-transform duration-300 ease-ks; }
+    .nav-link:hover::after, .nav-link[aria-current="page"]::after { @apply scale-x-100; }
+    .nav-link[aria-current="page"] { @apply text-gold; }
+  }
+
+  @layer utilities {
+    .no-scrollbar { scrollbar-width: none; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .tabular { font-variant-numeric: tabular-nums; }
+    /* появление при скролле (только если работает JS) */
+    .js .reveal { opacity: 0; transform: translateY(18px); transition: opacity .8s var(--ease-ks), transform .8s var(--ease-ks); transition-delay: var(--d, 0ms); }
+    .js .reveal.is-in { opacity: 1; transform: none; }
+    #results.htmx-request { opacity: .45; transition: opacity .2s; }
+    .htmx-indicator { opacity: 0; transition: opacity .2s; }
+    .htmx-request .htmx-indicator, .htmx-request.htmx-indicator { opacity: 1; }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+      .js .reveal { opacity: 1; transform: none; }
+    }
+  }

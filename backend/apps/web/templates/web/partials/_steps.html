@@ -1,0 +1,7 @@
+<ol class="flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.18em]" aria-label="Шаги оформления">
+  <li class="flex items-center gap-3 {% if current == 1 %}text-gold{% else %}text-patina-text{% endif %}"><span class="grid size-6 place-items-center rounded-full border {% if current == 1 %}border-gold{% else %}border-patina/60{% endif %}">{% if current > 1 %}✓{% else %}1{% endif %}</span>Корзина</li>
+  <li class="h-px w-8 bg-rule sm:w-16"></li>
+  <li class="flex items-center gap-3 {% if current == 2 %}text-gold{% elif current > 2 %}text-patina-text{% else %}text-mute-deep{% endif %}"><span class="grid size-6 place-items-center rounded-full border {% if current == 2 %}border-gold{% elif current > 2 %}border-patina/60{% else %}border-rule{% endif %}">{% if current > 2 %}✓{% else %}2{% endif %}</span>Адрес</li>
+  <li class="h-px w-8 bg-rule sm:w-16"></li>
+  <li class="flex items-center gap-3 {% if current == 3 %}text-gold{% else %}text-mute-deep{% endif %}"><span class="grid size-6 place-items-center rounded-full border {% if current == 3 %}border-gold{% else %}border-rule{% endif %}">3</span>Оплата</li>
+</ol>
